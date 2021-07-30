@@ -16,6 +16,11 @@ if [[ -f "$HOME/.notmux" ]]; then
   return
 fi
 
+if [[ -n "${NO_AUTOTMUX:+x}" ]]; then
+  unset NO_AUTOTMUX
+  return
+fi
+
 if [[ -z "$TMUX" && -n "$SSH_CONNECTION" ]] && which tmux &> /dev/null; then
   export TMUX_SSH=1
   if ! tmux ls -F '#{session_name}' 2> /dev/null | grep "^ssh-$USER$" &> /dev/null; then
