@@ -13,11 +13,13 @@ fi
 
 if [[ -f "$HOME/.notmux" ]]; then
   rm "$HOME/.notmux"
+  echo 'Skipping auto-tmux due to ~/.notmux'
   return
 fi
 
 if [[ -n "${NO_AUTOTMUX:+x}" ]]; then
   unset NO_AUTOTMUX
+  echo 'Skipping auto-tmux due to $NO_AUTOTMUX'
   return
 fi
 
