@@ -26,7 +26,7 @@ fi
 if [[ -z "$TMUX" && -n "$SSH_CONNECTION" ]] && which tmux &> /dev/null; then
   export TMUX_SSH=1
   if ! tmux ls -F '#{session_name}' 2> /dev/null | grep "^ssh-$USER$" &> /dev/null; then
-    tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
+    system_name="$system_name" tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
   fi
 
   # Allocating a session ID.
