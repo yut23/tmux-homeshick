@@ -34,14 +34,15 @@ if [[ -z "$TMUX" && -n "$SSH_CONNECTION" ]] && which tmux &> /dev/null; then
     emulate -L zsh
     setopt extendedglob
     local -a sessions
-    local prefix="ssh-$USER-"
-    sessions=(${(n)${(@M)"${(f)$(tmux ls -F '#{session_name}')}":#(#s)${prefix}[1-9][0-9]#(#e)}#$prefix})
-    #            ^     ^     ^                                  ^ ^----------+-----------^ ^---+---^
-    #            |     |     +- split output by lines           |            |                 |
-    #            |     +----- delete non-matching elements -----+     /^${prefix}\d+$/         |
-    #            |                                                             delete $prefix -+
-    #            +- sort by numeric value
-    # Equivalent to: ($(tmux ... | grep "^ssh-$USER-[1-9][0-9]*$" | sed "s/^ssh-$USER-//" | sort -n))
+    # Inner expansion:
+    #   split tmux output into an array by lines
+    #   quote to prevent further whitespace splitting
+    # Outer expansion:
+    #   PCRE: s/^(?:${prefix}([1-9][0-9]*)|.*)$/\1/
+    #   (n): sort by numeric value
+    #   no quotes to discard empty elements (i.e. those that didn't match)
+    # Roughly equivalent to: ($(tmux ... | sed -nE "s/ssh-$USER-([1-9][0-9]*)$/\1/p" | sort -n))
+    sessions=(${(n)"${(@f)$(tmux ls -F '#{session_name}')}"/(#s)(ssh-$USER-(#b)([1-9][0-9]#)|*)(#e)/$match[1]})
 
     # Allocating a session ID.
     # There are two possibilities here. First, we could have a list of session
