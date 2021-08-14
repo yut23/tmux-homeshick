@@ -7,23 +7,55 @@
 
 # Modified for zsh by yut23
 
-if [[ -z "${SSH_CLIENT+1}" || "${SSH_CLIENT}" =~ 127\.0\.0\.1 || "${SSH_CLIENT}" =~ ::1 ]]; then
-  return
-fi
+should_autotmux() {
+  local yes=0 no=1  # for my sanity
+  if (( ! $+commands[tmux] )); then
+    return $no
+  fi
+  if [[ -z "${SSH_CONNECTION+x}" || -n "${TMUX+x}" ]]; then
+    # not an ssh login or already in tmux
+    return $no
+  fi
 
-if [[ -f "$HOME/.notmux" ]]; then
-  rm "$HOME/.notmux"
-  echo 'Skipping auto-tmux due to ~/.notmux'
-  return
-fi
+  case ${AUTOTMUX-x} in
+    y)
+      reason='$AUTOTMUX=y'
+      return $yes
+      ;;
+    n)
+      # propagate to subshells
+      export AUTOTMUX=sub
+      reason='$AUTOTMUX=n'
+      return $no
+      ;;
+    sub)
+      return $no
+      ;;
+  esac
 
-if [[ -n "${NO_AUTOTMUX:+x}" ]]; then
-  unset NO_AUTOTMUX
-  echo 'Skipping auto-tmux due to $NO_AUTOTMUX'
-  return
-fi
+  # space-separated values: client IP, client port, server IP, server port
+  local _ssh_connection=(${=SSH_CONNECTION})
+  #if [[ $_ssh_connection[1] == $_ssh_connection[3] ]]; then
+  if [[ $_ssh_connection[1] == ::1 ]]; then
+    reason='local connection'
+    return $no
+  fi
 
-if [[ -z "$TMUX" && -n "$SSH_CONNECTION" ]] && which tmux &> /dev/null; then
+  if [[ -f "$HOME/.notmux" ]]; then
+    rm "$HOME/.notmux"
+    reason='~/.notmux'
+    return $no
+  fi
+
+  return $yes
+}
+
+if should_autotmux; then
+  if [[ -n ${reason+x} ]]; then
+    >&2 echo "Forcing auto-tmux due to $reason"
+    unset reason
+  fi
+  unset AUTOTMUX
   export TMUX_SSH=1
   if ! tmux ls -F '#{session_name}' 2> /dev/null | grep "^ssh-$USER$" &> /dev/null; then
     system_name="$system_name" tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
@@ -66,7 +98,12 @@ if [[ -z "$TMUX" && -n "$SSH_CONNECTION" ]] && which tmux &> /dev/null; then
   }
 
   exec tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER-$session_index -t ssh-$USER
+else
+  if [[ -n ${reason+x} ]]; then
+    >&2 echo "Skipping auto-tmux due to $reason"
+    unset reason
+  fi
+  if [[ ${AUTOTMUX-x} != sub ]]; then
+    unset AUTOTMUX
+  fi
 fi
-#if [[ -n "$TMUX" ]] ; then
-#  export DISPLAY=$(cat ~/.ssh/display.txt)
-#fi
