@@ -12,6 +12,17 @@ should_autotmux() {
   if (( ! $+commands[tmux] )); then
     return $no
   fi
+  # check tmux version: tpm only supports 1.9+
+  # from ~/.tmux/plugins/tpm/scripts/check_tmux_version.sh
+  local min_version="1.9"
+  local min_version_int=$(tr -dC '[:digit:]' <<<"$min_version")
+  local curr_version=$(tmux -V | cut -d' ' -f2)
+  local curr_version_int=$(tr -dC '[:digit:]' <<<"$curr_version")
+  if [[ $curr_version_int -lt $min_version_int ]]; then
+    echo "tmux version must be at least $min_version; currently have $curr_version"
+    reason='outdated tmux'
+    return $no
+  fi
   if [[ -z "${SSH_CONNECTION+x}" || -n "${TMUX+x}" ]]; then
     # not an ssh login or already in tmux
     return $no
