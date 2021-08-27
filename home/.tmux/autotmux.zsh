@@ -33,8 +33,9 @@ should_autotmux() {
       ;;
   esac
 
+  local -a _ssh_connection
   # space-separated values: client IP, client port, server IP, server port
-  local _ssh_connection=(${=SSH_CONNECTION})
+  _ssh_connection=(${=SSH_CONNECTION})
   #if [[ $_ssh_connection[1] == $_ssh_connection[3] ]]; then
   if [[ $_ssh_connection[1] == ::1 ]]; then
     reason='local connection'
