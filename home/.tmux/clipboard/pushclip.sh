@@ -5,7 +5,7 @@
 
 # Load buffer into tmux
 MYDIR="$(realpath "$(dirname "$0")")"
-TEMPFILE="`tempfile 2>/dev/null`"
+TEMPFILE="`mktemp 2>/dev/null`"
 if [ $? -ne 0 ]; then
 	TEMPFILE="/tmp/_clip_temp_yssh$USER"
 fi
