@@ -42,18 +42,23 @@ function! YankSyncPush(regname)
 	endif
 endfunction
 
+" Shared buffer handling between YankSyncPull and YankSyncPullAll
+function! s:HandleBuffer(newbuf)
+	if a:newbuf == ['!!!___PURGED___!!!']
+		call YankSyncPurgeRegs(a:newbuf)
+	else
+		let curcontents = YankSyncGetRegLines(0)
+		if curcontents != a:newbuf
+			call YankSyncShiftRegs(a:newbuf)
+		endif
+	endif
+endfunction
+
 " Triggered externally to cause vim to pull in external buffer
 function! YankSyncPull()
-	let newbuf = systemlist(s:ysshpull, '', 1)
+	let newbuf = split(system(s:ysshpull), '\n', 1)
 	if v:shell_error == 0
-		if newbuf == ['!!!___PURGED___!!!']
-			call YankSyncPurgeRegs(newbuf)
-		else
-			let curcontents = YankSyncGetRegLines(0)
-			if curcontents != newbuf
-				call YankSyncShiftRegs(newbuf)
-			endif
-		endif
+		call s:HandleBuffer(newbuf)
 	endif
 endfunction
 
@@ -61,9 +66,9 @@ endfunction
 function! YankSyncPullAll()
 	"for i in [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 	for i in [0] " just load one to speed up startup
-		let newbuf = systemlist(s:ysshgetbuf . ' ' . string(i), '', 1)
+		let newbuf = split(system(s:ysshgetbuf . ' ' . string(i)), '\n', 1)
 		if v:shell_error == 0
-			call YankSyncShiftRegs(newbuf)
+			call s:HandleBuffer(newbuf)
 		endif
 	endfor
 endfunction
@@ -71,7 +76,13 @@ endfunction
 augroup clipmgmt
 	autocmd!
 	autocmd TextYankPost * call YankSyncPush(v:event['regname'])
-	silent! autocmd Signal SIGUSR1 call YankSyncPull()
+	if exists('##Signal')
+		" Neovim
+		silent! autocmd Signal SIGUSR1 call YankSyncPull()
+	elseif exists('##SigUSR1')
+		" Vim
+		silent! autocmd SigUSR1 call YankSyncPull()
+	endif
 	autocmd VimEnter * call YankSyncPullAll()
 augroup END
 
