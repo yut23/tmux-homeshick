@@ -75,7 +75,9 @@ endfunction
 
 augroup clipmgmt
 	autocmd!
-	autocmd TextYankPost * call YankSyncPush(v:event['regname'])
+	if exists('##TextYankPost')
+		autocmd TextYankPost * call YankSyncPush(v:event['regname'])
+	endif
 	if exists('##Signal')
 		" Neovim
 		silent! autocmd Signal SIGUSR1 call YankSyncPull()
