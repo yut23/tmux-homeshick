@@ -15,13 +15,12 @@ cat > "$TEMPFILE"
 
 (
 
-tmux load-buffer "$TEMPFILE" &>/dev/null
+trap '{ rm -f "$TEMPFILE"; }' EXIT
+tmux load-buffer - &>/dev/null
 if [ $? -ne 0 ]; then exit 1; fi
 
 # Trigger running vims to pull in update
 "$MYDIR/updatevims.sh"
-
-rm -f "$TEMPFILE"
 
 ) &
 
