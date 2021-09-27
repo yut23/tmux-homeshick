@@ -16,7 +16,7 @@ cat > "$TEMPFILE"
 (
 
 trap '{ rm -f "$TEMPFILE"; }' EXIT
-tmux load-buffer - &>/dev/null
+tmux load-buffer "$TEMPFILE" &>/dev/null
 if [ $? -ne 0 ]; then exit 1; fi
 
 # Trigger running vims to pull in update

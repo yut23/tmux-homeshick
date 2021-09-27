@@ -83,7 +83,7 @@ augroup clipmgmt
 		silent! autocmd Signal SIGUSR1 call YankSyncPull()
 	elseif exists('##SigUSR1')
 		" Vim
-		silent! autocmd SigUSR1 call YankSyncPull()
+		silent! autocmd SigUSR1 * call YankSyncPull()
 	endif
 	autocmd VimEnter * call YankSyncPullAll()
 augroup END
