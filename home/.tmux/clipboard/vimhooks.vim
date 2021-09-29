@@ -3,6 +3,19 @@ let s:ysshpush = s:sdir . '/vimyanksyncpush.sh'
 let s:ysshpull = s:sdir . '/vimyanksyncpull.sh'
 let s:ysshgetbuf = s:sdir . '/getcopybuffer.sh'
 
+" Wrapper to support NeoVim's 'u'/'"' option in Vim
+function! s:SetReg(regname, value, ...)
+	let ret = call('setreg', [a:regname, a:value] + a:000)
+	if !has('nvim') && a:0 > 0 && match(a:1, '[u"]') != -1
+		if has('patch-8.2.0924')
+			call setreg('"', {'points_to': a:regname})
+		else
+			echom 'Cannot set unnamed register to point to "' . a:regname . '; please update Vim to 8.2.0924+'
+		endif
+	endif
+	return ret
+endfunction
+
 " Shifts register 0->1, 1->2, etc. then sets reg 0 to the given value
 " Expects a linewise list for newcontents
 function! YankSyncShiftRegs(newcontents)
@@ -14,11 +27,11 @@ function! YankSyncShiftRegs(newcontents)
 	" If the new contents ends with a NL (empty list entry), remove the
 	" empty entry and setreg linewise.  Otherwise, setreg characterwise.
 	if len(a:newcontents) == 0
-		call setreg(0, [], 'cu')
+		call s:SetReg(0, [], 'cu')
 	elseif empty(a:newcontents[-1])
-		call setreg(0, a:newcontents[0:-2], 'lu')
+		call s:SetReg(0, a:newcontents[0:-2], 'lu')
 	else
-		call setreg(0, a:newcontents, 'cu')
+		call s:SetReg(0, a:newcontents, 'cu')
 	endif
 endfunction
 
@@ -47,8 +60,10 @@ function! s:HandleBuffer(newbuf)
 	if a:newbuf == ['!!!___PURGED___!!!']
 		call YankSyncPurgeRegs(a:newbuf)
 	else
-		let curcontents = YankSyncGetRegLines(0)
-		if curcontents != a:newbuf
+		" check both registers 0 and 1, since yanks go to 0 and deletes go to 1
+		let curcontents0 = YankSyncGetRegLines(0)
+		let curcontents1 = YankSyncGetRegLines(1)
+		if curcontents0 != a:newbuf && curcontents1 != a:newbuf
 			call YankSyncShiftRegs(a:newbuf)
 		endif
 	endif
