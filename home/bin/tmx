@@ -1,0 +1,43 @@
+#!/usr/bin/zsh
+
+if ! tmux ls -F '#{session_name}' 2> /dev/null | grep "^ssh-$USER$" &> /dev/null; then
+  system_name="$system_name" tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
+fi
+
+# anonymous shell function, for local option scoping
+() {
+  emulate -L zsh
+  setopt extendedglob
+  local -a sessions
+  # Inner expansion:
+  #   split tmux output into an array by lines
+  #   quote to prevent further whitespace splitting
+  # Outer expansion:
+  #   PCRE: s/^(?:${prefix}([1-9][0-9]*)|.*)$/\1/
+  #   (n): sort by numeric value
+  #   no quotes to discard empty elements (i.e. those that didn't match)
+  # Roughly equivalent to: ($(tmux ... | sed -nE "s/ssh-$USER-([1-9][0-9]*)$/\1/p" | sort -n))
+  sessions=(${(n)"${(@f)$(tmux ls -F '#{session_name}')}"/(#s)(ssh-$USER-(#b)([1-9][0-9]#)|*)(#e)/$match[1]})
+
+  # Allocating a session ID.
+  # There are two possibilities here. First, we could have a list of session
+  # IDs that is densely packed; e.g. [1, 2, 3, 4]. In this case, we want to
+  # allocate 5.
+  #
+  # If, on the other hand, there is a gap, then it becomes unsafe to just use
+  # #sessions as the new ID. So instead, we search through the list to find the
+  # first mismatch between the session ID and its position in the list.
+  #
+  # Examples:
+  #   [1, 2, 4, 6] vs. [1, 2, 3, 4] -> i=3 and s[i]=4 don't match, use 3
+  #   [2, 3, 4]    vs. [1, 2, 3]    -> i=1 and s[i]=2 don't match, use 1
+  session_index=$(($#sessions + 1))
+  for ((i = 1; i <= $#sessions; i++)); do
+    if (($sessions[i] != i)); then
+      session_index=$i
+      break
+    fi
+  done
+}
+
+exec tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER-$session_index -t ssh-$USER
