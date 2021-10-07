@@ -1,6 +1,7 @@
 #!/usr/bin/zsh
 
-if (( $# > 0 )); then
+# check if we have arguments and we weren't sourced
+if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
   tmux "$@"
   exit
 fi
