@@ -7,7 +7,8 @@ if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
 fi
 
 if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^ssh-$USER$"; then
-  system_name="$system_name" tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
+  # pass $system_name (which is not exported) through
+  system_name="$system_name" tmux new-session -s ssh-$USER -d
 fi
 
 # anonymous shell function, for local option scoping
@@ -46,4 +47,4 @@ fi
   done
 }
 
-exec tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER-$session_index -t ssh-$USER
+exec tmux new-session -s ssh-$USER-$session_index -t ssh-$USER \; set-option destroy-unattached
