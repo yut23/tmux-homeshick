@@ -1,6 +1,11 @@
 #!/usr/bin/zsh
 
-if ! tmux ls -F '#{session_name}' 2> /dev/null | grep "^ssh-$USER$" &> /dev/null; then
+if (( $# > 0 )); then
+  tmux "$@"
+  exit
+fi
+
+if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^ssh-$USER$"; then
   system_name="$system_name" tmux -f ~/.tmux/ssh.conf new-session -s ssh-$USER -d
 fi
 
