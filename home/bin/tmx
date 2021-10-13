@@ -6,6 +6,10 @@ if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
   exit
 fi
 
+# make sure /etc/profile.d/ gets loaded properly at NERSC
+typeset +r PROFILEREAD
+unset PROFILEREAD
+
 if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^ssh-$USER$"; then
   # pass $system_name (which is not exported) through
   system_name="$system_name" tmux new-session -s ssh-$USER -d
