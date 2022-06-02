@@ -16,10 +16,10 @@ function! s:SetReg(regname, value, ...)
 	return ret
 endfunction
 
-" Shifts register 0->1, 1->2, etc. then sets reg 0 to the given value
+" Shifts register 1->2, 2->3, etc. then sets reg 1 to the given value
 " Expects a linewise list for newcontents
 function! YankSyncShiftRegs(newcontents)
-	for i in [9, 8, 7, 6, 5, 4, 3, 2, 1]
+	for i in [9, 8, 7, 6, 5, 4, 3, 2]
 		let rtype = getregtype(i - 1)
 		let rcontents = getreg(i - 1, 1, rtype ==# 'V')
 		call setreg(i, rcontents, rtype)
@@ -27,11 +27,11 @@ function! YankSyncShiftRegs(newcontents)
 	" If the new contents ends with a NL (empty list entry), remove the
 	" empty entry and setreg linewise.  Otherwise, setreg characterwise.
 	if len(a:newcontents) == 0
-		call s:SetReg(0, [], 'cu')
+		call s:SetReg(1, [], 'cu')
 	elseif empty(a:newcontents[-1])
-		call s:SetReg(0, a:newcontents[0:-2], 'lu')
+		call s:SetReg(1, a:newcontents[0:-2], 'lu')
 	else
-		call s:SetReg(0, a:newcontents, 'cu')
+		call s:SetReg(1, a:newcontents, 'cu')
 	endif
 endfunction
 
@@ -80,7 +80,7 @@ endfunction
 " Synchronizes all numbered registers to external buffers
 function! YankSyncPullAll()
 	"for i in [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-	for i in [0] " just load one to speed up startup
+	for i in [1, 0] " just load two to speed up startup
 		let newbuf = split(system(s:ysshgetbuf . ' ' . string(i)), '\n', 1)
 		if v:shell_error == 0
 			call s:HandleBuffer(newbuf)
