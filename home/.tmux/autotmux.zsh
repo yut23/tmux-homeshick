@@ -14,10 +14,14 @@ should_autotmux() {
   fi
   # check tmux version: tpm only supports 1.9+
   # from ~/.tmux/plugins/tpm/scripts/check_tmux_version.sh
+  # modified to use zsh expansion instead of subprocesses
   local min_version="1.9"
-  local min_version_int=$(tr -dC '[:digit:]' <<<"$min_version")
-  local curr_version=$(tmux -V | cut -d' ' -f2)
-  local curr_version_int=$(tr -dC '[:digit:]' <<<"$curr_version")
+  # remove non-digits
+  local min_version_int=${min_version//[^[:digit:]]}
+  # get the second word (version number) from e.g. "tmux 3.3a"
+  local curr_version=${${=$(tmux -V)}[2]}
+  # remove non-digits
+  local curr_version_int=${curr_version//[^[:digit:]]}
   if [[ $curr_version_int -lt $min_version_int ]]; then
     echo "tmux version must be at least $min_version; currently have $curr_version"
     reason='outdated tmux'

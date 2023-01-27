@@ -1,6 +1,9 @@
 #!/usr/bin/zsh
 
-# check if we have arguments and we weren't sourced
+# this file can be sourced instead of executed, so tmux will replace the shell process
+# (this is used in ~/.tmux/autotmux.zsh)
+
+# if we have arguments, just pass them to tmux and exit, unless we were sourced
 if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
   tmux "$@"
   exit
