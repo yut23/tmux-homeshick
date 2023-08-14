@@ -10,13 +10,15 @@ if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
 fi
 
 # make sure /etc/profile.d/ gets loaded properly at NERSC
-typeset +r PROFILEREAD
-unset PROFILEREAD
-# something about LMod breaks under tmux on perlmutter, so unload everything beforehand
-if [[ $system_name == perlmutter ]]; then
-  module purge
-  unset LMOD_MODULERCFILE
-  unset _MODULES_LOADED
+if [[ $LMOD_SITE_NAME == NERSC ]]; then
+  typeset +r PROFILEREAD
+  unset PROFILEREAD
+  # something about LMod breaks under tmux on perlmutter, so unload everything beforehand
+  if [[ $system_name == perlmutter ]]; then
+    module purge
+    unset LMOD_MODULERCFILE
+    unset _MODULES_LOADED
+  fi
 fi
 
 if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^ssh-$USER$"; then
