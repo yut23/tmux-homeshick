@@ -3,15 +3,18 @@
 # this file can be sourced instead of executed, so tmux will replace the shell process
 # (this is used in ~/.tmux/autotmux.zsh)
 
+# allow overriding the session name prefix
+: ${TMX_SESSION:=ssh-$USER}
+
 # if we have arguments, just pass them to tmux and exit, unless we were sourced
 if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
   tmux "$@"
   exit
 fi
 
-if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^ssh-$USER$"; then
+if ! tmux ls -F '#{session_name}' 2> /dev/null | grep -q "^$TMX_SESSION$"; then
   # pass $system_name (which is not exported) through
-  system_name="$system_name" tmux new-session -s ssh-$USER -d
+  system_name="$system_name" tmux new-session -s "$TMX_SESSION" -d
 fi
 
 # anonymous shell function, for local option scoping
@@ -26,8 +29,8 @@ fi
   #   PCRE: s/^(?:${prefix}([1-9][0-9]*)|.*)$/\1/
   #   (n): sort by numeric value
   #   no quotes to discard empty elements (i.e. those that didn't match)
-  # Roughly equivalent to: ($(tmux ... | sed -nE "s/ssh-$USER-([1-9][0-9]*)$/\1/p" | sort -n))
-  sessions=(${(n)"${(@f)$(tmux ls -F '#{session_name}')}"/(#s)(ssh-$USER-(#b)([1-9][0-9]#)|*)(#e)/$match[1]})
+  # Roughly equivalent to: ($(tmux ... | sed -nE "s/$TMX_SESSION-([1-9][0-9]*)$/\1/p" | sort -n))
+  sessions=(${(n)"${(@f)$(tmux ls -F '#{session_name}')}"/(#s)($TMX_SESSION-(#b)([1-9][0-9]#)|*)(#e)/$match[1]})
 
   # Allocating a session ID.
   # There are two possibilities here. First, we could have a list of session
@@ -50,4 +53,4 @@ fi
   done
 }
 
-exec tmux new-session -s ssh-$USER-$session_index -t ssh-$USER \; set-option destroy-unattached
+exec tmux new-session -s $TMX_SESSION-$session_index -t $TMX_SESSION \; set-option destroy-unattached
