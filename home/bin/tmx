@@ -6,6 +6,12 @@
 # allow overriding the session name prefix
 : ${TMX_SESSION:=ssh-$USER}
 
+if [[ $# -eq 1 && $1 == --tmux=* ]]; then
+  # set TMX_SESSION with the same syntax as for ssh
+  TMX_SESSION=${1#--tmux=}
+  shift
+fi
+
 # if we have arguments, just pass them to tmux and exit, unless we were sourced
 if [[ $# -gt 0 && ! $ZSH_EVAL_CONTEXT =~ :file(code)?$ ]]; then
   tmux "$@"
