@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/usr/bin/env zsh
 
 # this file can be sourced instead of executed, so tmux will replace the shell process
 # (this is used in ~/.tmux/autotmux.zsh)
