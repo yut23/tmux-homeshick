@@ -11,8 +11,9 @@ fi
 
 MAX_SIZE=100000000
 
-#csv="`tmux list-buffers -F '#{buffer_created},#{buffer_size},#{buffer_name}' -f '#{m:buffer*,#{buffer_name}}'`"
-csv="`tmux list-buffers -F '#{buffer_created},#{buffer_size},#{buffer_name}' | grep ',buffer[0-9]'`"
+# this line uses tmux's built-in filtering which is only available since 3.2 (release April 2021)
+csv="`tmux list-buffers -F '#{buffer_created},#{buffer_size},#{buffer_name}' -f '#{m:buffer*,#{buffer_name}}'`"
+#csv="`tmux list-buffers -F '#{buffer_created},#{buffer_size},#{buffer_name}' | grep ',buffer[0-9]'`"
 if [ $? -ne 0 ]; then exit 1; fi
 
 headcount=`expr $N + 1`
