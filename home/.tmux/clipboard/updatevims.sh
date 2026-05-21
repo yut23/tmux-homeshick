@@ -15,7 +15,8 @@ update_nvims() {
 	# Only exit if version is truly less than 0.4.0
 	if [[ "$MAJOR" -eq 0 ]] && [[ "$MINOR" -lt 4 ]]; then return 0; fi
 
-	killall -USR1 -u "$(whoami)" -r '^nvi(m|ew)(diff)?$' &>/dev/null
+	# Only send the signal to active processes, as it terminates suspended ones
+	pkill -USR1 -u "$(id -u)" -r R,S,D '^nvi(m|ew)(diff)?$' &>/dev/null
 	return 0
 }
 
@@ -33,7 +34,8 @@ update_vims() {
 	local cmd='if exists("##SigUSR1")|cq 0|else|cq 1|endif'
 	if ! vim -u NONE --not-a-term --cmd "$cmd" >/dev/null; then return 0; fi
 
-	killall -USR1 -u "$(whoami)" -r '^vi(m|ew)(diff)?$' &>/dev/null
+	# Only send the signal to active processes, as it terminates suspended ones
+	pkill -USR1 -u "$(id -u)" -r R,S,D '^vi(m|ew)(diff)?$' &>/dev/null
 	return 0
 }
 

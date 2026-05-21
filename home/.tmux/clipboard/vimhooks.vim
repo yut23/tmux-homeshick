@@ -78,9 +78,13 @@ function! YankSyncPull()
 endfunction
 
 " Synchronizes all numbered registers to external buffers
-function! YankSyncPullAll()
-	"for i in [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-	for i in [1, 0] " just load two to speed up startup
+function! YankSyncPullAll(...)
+	let l:bufnumbers = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+	if a:0 > 0
+		" slice the last a:1 elements from the list
+		let l:bufnumbers = l:bufnumbers[-min([l:bufnumbers->len(), a:1]):]
+	endif
+	for i in l:bufnumbers
 		let newbuf = split(system(s:ysshgetbuf . ' ' . string(i)), '\n', 1)
 		if v:shell_error == 0
 			call s:HandleBuffer(newbuf)
@@ -100,7 +104,10 @@ augroup clipmgmt
 		" Vim
 		silent! autocmd SigUSR1 * call YankSyncPull()
 	endif
-	autocmd VimEnter * call YankSyncPullAll()
+	" just load two to speed up startup
+	autocmd VimEnter * call YankSyncPullAll(2)
+	" sync all buffers at resume
+	autocmd VimResume * call YankSyncPullAll()
 augroup END
 
 
